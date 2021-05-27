@@ -1,6 +1,24 @@
 <template>
   <div>
-    <el-tree :data="data" :props="defaultProps" @node-click="handleNodeClick"></el-tree>
+    <el-tree :default-expanded-keys="expandedKey" show-checkbox :data="menu" node-key="catId" :expand-on-click-node="false" :props="defaultProps">
+      <span class="custom-tree-node" slot-scope="{ node, data }">
+        <span>{{ node.label }}</span>
+        <span>
+          <el-button v-if="data.catLevel <= 2"
+            type="text"
+            size="mini"
+            @click="() => append(data)">
+            Append
+          </el-button>
+          <el-button v-if="node.childNodes.length == 0"
+            type="text"
+            size="mini"
+            @click="() => remove(node, data)">
+            Delete
+          </el-button>
+        </span>
+      </span>
+    </el-tree>
   </div>
 </template>
 
@@ -15,44 +33,11 @@ export default {
   data () {
     // 这里存放数据
     return {
-      data: [{
-        label: '一级 1',
-        children: [{
-          label: '二级 1-1',
-          children: [{
-            label: '三级 1-1-1'
-          }]
-        }]
-      }, {
-        label: '一级 2',
-        children: [{
-          label: '二级 2-1',
-          children: [{
-            label: '三级 2-1-1'
-          }]
-        }, {
-          label: '二级 2-2',
-          children: [{
-            label: '三级 2-2-1'
-          }]
-        }]
-      }, {
-        label: '一级 3',
-        children: [{
-          label: '二级 3-1',
-          children: [{
-            label: '三级 3-1-1'
-          }]
-        }, {
-          label: '二级 3-2',
-          children: [{
-            label: '三级 3-2-1'
-          }]
-        }]
-      }],
+      expandedKey: [],
+      menu: [],
       defaultProps: {
         children: 'children',
-        label: 'label'
+        label: 'name'
       }
     }
   },
@@ -62,8 +47,34 @@ export default {
   watch: {},
 // 方法集合
   methods: {
-    handleNodeClick (data) {
+    append (data) {
       console.log(data)
+    },
+
+    remove (node, data) {
+      this.$confirm(`是否删除${data.name}菜单?`, '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        let ids = [data.catId]
+        this.$http({
+          url: this.$http.adornUrl('/product/category/delete'),
+          method: 'post',
+          data: this.$http.adornData(ids, false)
+        }).then(({data}) => {
+          this.$message({
+            message: '菜单删除成功',
+            type: 'success'
+          })
+          // 刷新出新的菜单
+          this.getMenus()
+          // 设置需要默认展开的菜单
+          this.expandedKey = [node.parent.data.catId]
+        })
+      }).catch(() => {
+
+      })
     },
     getMenus () {
       this.$http({
@@ -71,6 +82,7 @@ export default {
         method: 'get'
       }).then(({data}) => {
         console.log(data)
+        this.menu = data.data
       }).catch(() => {
 
       })

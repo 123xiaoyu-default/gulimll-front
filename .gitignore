@@ -23,3 +23,5 @@
 hs_err_pid*
 /renren-fast-vue/.gitignore
 /renren-fast-vue/node_modules
+.idea
+/renren-fast-vue/.gitignore
